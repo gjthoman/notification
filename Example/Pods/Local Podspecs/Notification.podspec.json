@@ -1,7 +1,7 @@
 {
   "name": "Notification",
   "version": "0.1.0",
-  "summary": "A short description of Notification.",
+  "summary": "Uses context to ask a user if they want to allow notifications.",
   "description": "",
   "homepage": "https://github.com/<GITHUB_USERNAME>/Notification",
   "license": "MIT",

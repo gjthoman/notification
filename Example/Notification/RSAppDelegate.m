@@ -7,12 +7,61 @@
 //
 
 #import "RSAppDelegate.h"
+#import "RSNotifications.h"
 
 @implementation RSAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+
+    UIViewController *view = [[UIViewController alloc]init];
+    self.window.rootViewController = view;
+
+    [self.window makeKeyAndVisible];
+    
+    RSNotifications *notifications = [[RSNotifications notificationManager]init];
+
+    notifications.vc = view;
+    notifications.enabled = true;
+    
+    notifications.messageTitle = @"Theme Hours";
+    notifications.messageBody = @"Would you like a notification when we have a special show hour?";
+    notifications.messageLabelLater = @"Maybe Later";
+    
+    notifications.settingsAlertTitle = @"Toggle Notifications";
+    notifications.logging = true;
+    
+    notifications.customValidation = ^BOOL{
+        if ( ![[[RSNotifications notificationManager]init] isLessThanOS8] ){
+            UIUserNotificationSettings *grantedSettings = [[UIApplication sharedApplication] currentUserNotificationSettings];
+            
+            if (grantedSettings.types == UIUserNotificationTypeNone) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    };
+
+    notifications.onVerificationComplete = ^{
+        NSLog(@"callback override");
+    };
+
+    notifications.onYes = ^{
+        NSLog(@"YES");
+    };
+    notifications.onLater = ^{
+        NSLog(@"LATER");
+    };
+    notifications.onNever = ^{
+        NSLog(@"NEVER");
+    };
+    
+    [notifications run];
+    
     return YES;
 }
 
