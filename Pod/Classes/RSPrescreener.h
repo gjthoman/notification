@@ -1,8 +1,8 @@
 #import <foundation/Foundation.h>
 
-#define RS_NOTIFICATION_DATE @"RS_NOTIFICATION_DATE"
-#define RS_NOTIFICATION_ASKED @"RS_NOTIFICATION_ASKED"
-#define RS_NOTIFICATION_NEVER @"RS_NOTIFICATION_NEVER"
+#define RS_PRESCREENER_LATER_DATE @"RS_PRESCREENER_LATER_DATE"
+#define RS_PRESCREENER_ASKED @"RS_PRESCREENER_ASKED"
+#define RS_PRESCREENER_NEVER @"RS_PRESCREENER_NEVER"
 
 #define RS_MESSAGE_TITLE @"App Notifications"
 #define RS_MESSAGE_BODY @"Would you like to recieve notifications from this app?"
@@ -18,7 +18,8 @@
 
 #define RS_LOGGING false
 
-@interface RSNotifications : NSObject {
+@interface RSPrescreener : NSObject {
+    //prescreen some arbitrary apple dialog with arbitrary message based on arbitrary logic.
     NSString *messageTitle;
     NSString *messageBody;
     NSString *messageLabelYes;
@@ -30,15 +31,13 @@
     NSString *settingsAlertConfirm;
     
     BOOL logging;
-    NSInteger delaySeconds;
+    NSInteger laterDateDelaySeconds;//laterDateDelaySeconds
 
     UIViewController *vc;
-    BOOL (^customValidation)(void);
-    void (^primaryCallback)(void);
-    void (^onVerificationComplete)(void);
-    void (^onYes)(void);
-    void (^onLater)(void);
-    void (^onNever)(void);
+    BOOL (^customValidation)(void);//shouldPrescreen
+    void (^yes)(void);//yes
+    void (^later)(void);//later
+    void (^never)(void);//never
 }
 
 @property (nonatomic, strong) NSUserDefaults *userDefaults;
@@ -54,20 +53,19 @@
 @property (nonatomic, retain) NSString *settingsAlertConfirm;
 
 @property (nonatomic) BOOL logging;
-@property (nonatomic) NSInteger delaySeconds;
+@property (nonatomic) NSInteger laterDateDelaySeconds;
 
 @property (nonatomic, retain) UIViewController *vc;
 
 @property (nonatomic, copy) BOOL (^customValidation)(void);
-@property (nonatomic, copy) void (^primaryCallback)(void);
-@property (nonatomic, copy) void (^onVerificationComplete)(void);
-@property (nonatomic, copy) void (^onYes)(void);
-@property (nonatomic, copy) void (^onLater)(void);
-@property (nonatomic, copy) void (^onNever)(void);
+@property (nonatomic, copy) void (^yes)(void);
+@property (nonatomic, copy) void (^later)(void);
+@property (nonatomic, copy) void (^never)(void);
 
-+ (RSNotifications *)notificationManager;
++ (RSPrescreener *)manager;
 
-- (void)run;
+- (void)run;//prescreen with vc
+- (void)runWithVC: (UIViewController *) localVC;
 
 - (void)resetAllSettings;
 - (void)clearNever;

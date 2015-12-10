@@ -1,6 +1,6 @@
-#import "RSNotifications.h"
+#import "RSPrescreener.h"
 
-@implementation RSNotifications
+@implementation RSUserLogic
 
 @synthesize userDefaults;
 
@@ -20,53 +20,46 @@
 @synthesize vc;
 
 @synthesize customValidation;
-@synthesize primaryCallback;
-@synthesize onVerificationComplete;
 
-@synthesize onYes, onLater, onNever;
-static RSNotifications *notificationLogic = nil;
+@synthesize yes, later, never;
+static RSPrescreener *prescreener = nil;
 #pragma mark Singleton Methods
 
-+ (RSNotifications *)notificationManager {
-    if(notificationLogic == nil){
-        notificationLogic = [[super allocWithZone:NULL] init];
++ (RSPrescreener *)manager {
+    if(prescreener == nil){
+        prescreener = [[super allocWithZone:NULL] init];
         
-        notificationLogic.messageTitle = RS_MESSAGE_TITLE;
-        notificationLogic.messageBody = RS_MESSAGE_BODY;
-        notificationLogic.messageLabelYes = RS_MESSAGE_LABEL_YES;
-        notificationLogic.messageLabelLater = RS_MESSAGE_LABEL_LATER;
-        notificationLogic.messageLabelNever = RS_MESSAGE_LABEL_NEVER;
+        prescreener.messageTitle = RS_MESSAGE_TITLE;
+        prescreener.messageBody = RS_MESSAGE_BODY;
+        prescreener.messageLabelYes = RS_MESSAGE_LABEL_YES;
+        prescreener.messageLabelLater = RS_MESSAGE_LABEL_LATER;
+        prescreener.messageLabelNever = RS_MESSAGE_LABEL_NEVER;
         
-        notificationLogic.settingsAlertTitle = RS_SETTINGS_ALERT_TITLE;
-        notificationLogic.settingsAlertBody = RS_SETTINGS_ALERT_BODY;
-        notificationLogic.settingsAlertConfirm = RS_SETTINGS_ALERT_CONFIRM;
+        prescreener.settingsAlertTitle = RS_SETTINGS_ALERT_TITLE;
+        prescreener.settingsAlertBody = RS_SETTINGS_ALERT_BODY;
+        prescreener.settingsAlertConfirm = RS_SETTINGS_ALERT_CONFIRM;
         
-        notificationLogic.logging = RS_LOGGING;
-        notificationLogic.delaySeconds = RS_DELAY_SECONDS;
+        prescreener.logging = RS_LOGGING;
+        prescreener.laterDateDelaySeconds = RS_DELAY_SECONDS;
         
-        notificationLogic.vc = nil;
+        prescreener.vc = nil;
         
-        notificationLogic.customValidation = ^BOOL{
+        prescreener.customValidation = ^BOOL{
             return true;
         };
         
-        notificationLogic.primaryCallback = ^{
-            [[RSNotifications notificationManager]RSLog:@"primaryCallback not specified"];
+        prescreener.yes = ^{
+            [[RSUserLogic manager]RSLog:@"yes callback not specified"];
         };
         
-        notificationLogic.onVerificationComplete = ^{
-            [[RSNotifications notificationManager]RSLog:@"onVerificationComplete not specified"];
-        };
-        
-        notificationLogic.onYes = notificationLogic.onLater = notificationLogic.onNever = ^{return;};
+        prescreener.later = prescreener.never = ^{return;};
     }
     
-    return notificationLogic;
+    return prescreener;
 }
 
 - (id)init {
     if (self = [super init]) {
-        
     }
     
     return self;
@@ -89,7 +82,7 @@ static RSNotifications *notificationLogic = nil;
 - (void)run {
     if (!self.customValidation()) {
         [self RSLog:@"customValidation has failed"];
-        onVerificationComplete();
+//        onVerificationComplete();//remove
     }
     
     if ([self retrieveAsked]) {
@@ -200,22 +193,21 @@ static RSNotifications *notificationLogic = nil;
 - (void)handleYesAction
 {
     [self storeAsked];
-    primaryCallback();
-    onYes();
+    yes();
 }
 
 - (void)handleLaterAction
 {
     [self storeLaterDate];
     [self clearNever];
-    onLater();
+    later();
 }
 
 - (void)handleNeverAction
 {
     [self storeNever];
     [self clearLaterDate];
-    onNever();
+    never();
 }
 
 /* Example primaryCallback
@@ -236,20 +228,20 @@ static RSNotifications *notificationLogic = nil;
 
 - (void)storeLaterDate: (NSDate *) date
 {
-    [[self userDefaults] setObject:[self timeIntervalFromNow] forKey: RS_NOTIFICATION_DATE];
+    [[self userDefaults] setObject:[self timeIntervalFromNow] forKey: RS_PRESCREENER_LATER_DATE];
 }
 
 - (void)clearLaterDate {
-    [[self userDefaults] removeObjectForKey: RS_NOTIFICATION_DATE];
+    [[self userDefaults] removeObjectForKey: RS_PRESCREENER_LATER_DATE];
 }
 
 - (NSDate *)retrieveLaterDate {
-    return [[self userDefaults] objectForKey: RS_NOTIFICATION_DATE];
+    return [[self userDefaults] objectForKey: RS_PRESCREENER_LATER_DATE];
 }
 
 - (BOOL)afterLaterDate
 {
-    NSDate *storedDate = [[self userDefaults] objectForKey: RS_NOTIFICATION_DATE];
+    NSDate *storedDate = [[self userDefaults] objectForKey: RS_PRESCREENER_LATER_DATE];
     
     if (storedDate == nil) return false;
     
@@ -261,34 +253,34 @@ static RSNotifications *notificationLogic = nil;
 //STATUS ASKED
 
 - (void)storeAsked {
-    [[self userDefaults] setBool:true forKey: RS_NOTIFICATION_ASKED];
+    [[self userDefaults] setBool:true forKey: RS_PRESCREENER_ASKED];
 }
 
 - (void)clearAsked {
-    [[self userDefaults] removeObjectForKey: RS_NOTIFICATION_ASKED];
+    [[self userDefaults] removeObjectForKey: RS_PRESCREENER_ASKED];
 }
 
 - (BOOL)retrieveAsked {
-    return [[self userDefaults] boolForKey: RS_NOTIFICATION_ASKED];
+    return [[self userDefaults] boolForKey: RS_PRESCREENER_ASKED];
 }
 
 //STATUS NEVER
 
 - (void)storeNever {
-    [[self userDefaults] setBool:true forKey: RS_NOTIFICATION_NEVER];
+    [[self userDefaults] setBool:true forKey: RS_PRESCREENER_NEVER];
 }
 
 - (void)clearNever {
-    [[self userDefaults] removeObjectForKey: RS_NOTIFICATION_NEVER];
+    [[self userDefaults] removeObjectForKey: RS_PRESCREENER_NEVER];
 }
 
 - (BOOL)retrieveNever {
-    return [[self userDefaults] boolForKey: RS_NOTIFICATION_NEVER];
+    return [[self userDefaults] boolForKey: RS_PRESCREENER_NEVER];
 }
 
 - (NSDate *)timeIntervalFromNow
 {
-    return [[NSDate date] dateByAddingTimeInterval: delaySeconds];
+    return [[NSDate date] dateByAddingTimeInterval: laterDateDelaySeconds];
 }
 
 - (BOOL)isLessThanOS8
