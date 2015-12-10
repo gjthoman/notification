@@ -10,12 +10,11 @@
 #define RS_MESSAGE_LABEL_LATER @"Later"
 #define RS_MESSAGE_LABEL_NEVER @"Never"
 
-#define RS_SETTINGS_ALERT_TITLE @"App Notifications"
+#define RS_SETTINGS_ALERT_TITLE @"Notifications"
 #define RS_SETTINGS_ALERT_BODY @"Enable or disable notifications in the Settings Application."
-#define RS_SETTINGS_ALERT_CONFIRM @"OK"
+#define RS_SETTINGS_ALERT_CONFIRM @"Confirm"
 
 #define RS_DELAY_SECONDS 604800
-#define RS_ENABLED true
 
 #define RS_LOGGING false
 
@@ -30,7 +29,6 @@
     NSString *settingsAlertBody;
     NSString *settingsAlertConfirm;
     
-    BOOL enabled;
     BOOL logging;
     NSInteger delaySeconds;
 
@@ -55,7 +53,6 @@
 @property (nonatomic, retain) NSString *settingsAlertBody;
 @property (nonatomic, retain) NSString *settingsAlertConfirm;
 
-@property (nonatomic) BOOL enabled;
 @property (nonatomic) BOOL logging;
 @property (nonatomic) NSInteger delaySeconds;
 
@@ -68,14 +65,19 @@
 @property (nonatomic, copy) void (^onLater)(void);
 @property (nonatomic, copy) void (^onNever)(void);
 
-+ (id)notificationManager;
++ (RSNotifications *)notificationManager;
 
 - (void)run;
 
 - (void)resetAllSettings;
+- (void)clearNever;
+- (void)clearLaterDate;
 
 - (void)showSettingsMessage;
 - (void)storeLaterDate: (NSDate *) date;
+
+- (BOOL)retrieveAsked;
+- (void)RSLog: (NSString *)message;
 
 - (BOOL)isLessThanOS8;
 

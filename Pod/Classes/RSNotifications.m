@@ -14,7 +14,6 @@
 @synthesize settingsAlertBody;
 @synthesize settingsAlertConfirm;
 
-@synthesize enabled;
 @synthesize logging;
 @synthesize delaySeconds;
 
@@ -25,51 +24,51 @@
 @synthesize onVerificationComplete;
 
 @synthesize onYes, onLater, onNever;
+static RSNotifications *notificationLogic = nil;
 #pragma mark Singleton Methods
 
-+ (id)notificationManager {
-    static RSNotifications *notifManager = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        notifManager = [[self alloc] init];
-    });
-    return notifManager;
++ (RSNotifications *)notificationManager {
+    if(notificationLogic == nil){
+        notificationLogic = [[super allocWithZone:NULL] init];
+        
+        notificationLogic.messageTitle = RS_MESSAGE_TITLE;
+        notificationLogic.messageBody = RS_MESSAGE_BODY;
+        notificationLogic.messageLabelYes = RS_MESSAGE_LABEL_YES;
+        notificationLogic.messageLabelLater = RS_MESSAGE_LABEL_LATER;
+        notificationLogic.messageLabelNever = RS_MESSAGE_LABEL_NEVER;
+        
+        notificationLogic.settingsAlertTitle = RS_SETTINGS_ALERT_TITLE;
+        notificationLogic.settingsAlertBody = RS_SETTINGS_ALERT_BODY;
+        notificationLogic.settingsAlertConfirm = RS_SETTINGS_ALERT_CONFIRM;
+        
+        notificationLogic.logging = RS_LOGGING;
+        notificationLogic.delaySeconds = RS_DELAY_SECONDS;
+        
+        notificationLogic.vc = nil;
+        
+        notificationLogic.customValidation = ^BOOL{
+            return true;
+        };
+        
+        notificationLogic.primaryCallback = ^{
+            [[RSNotifications notificationManager]RSLog:@"primaryCallback not specified"];
+        };
+        
+        notificationLogic.onVerificationComplete = ^{
+            [[RSNotifications notificationManager]RSLog:@"onVerificationComplete not specified"];
+        };
+        
+        notificationLogic.onYes = notificationLogic.onLater = notificationLogic.onNever = ^{return;};
+    }
+    
+    return notificationLogic;
 }
 
 - (id)init {
     if (self = [super init]) {
-        messageTitle = RS_MESSAGE_TITLE;
-        messageBody = RS_MESSAGE_BODY;
-        messageLabelYes = RS_MESSAGE_LABEL_YES;
-        messageLabelLater = RS_MESSAGE_LABEL_LATER;
-        messageLabelNever = RS_MESSAGE_LABEL_NEVER;
-        
-        settingsAlertTitle = RS_SETTINGS_ALERT_TITLE;
-        settingsAlertBody = RS_SETTINGS_ALERT_BODY;
-        settingsAlertConfirm = RS_SETTINGS_ALERT_CONFIRM;
-
-        enabled = RS_ENABLED;
-        logging = RS_LOGGING;
-        delaySeconds = RS_DELAY_SECONDS;
-        
-        vc = nil;
-        RSNotifications * __weak weakSelf = self;
-        
-        customValidation = ^BOOL{
-            return true;
-        };
-        
-        primaryCallback = ^{
-            [weakSelf RSLog:@"primaryCallback not specified"];
-        };
-        
-        onVerificationComplete = ^{
-            [weakSelf RSLog:@"onVerificationComplete not specified"];
-        };
-        
-        onYes = onLater = onNever = ^{return;};
         
     }
+    
     return self;
 }
 
@@ -88,11 +87,6 @@
 }
 
 - (void)run {
-    if (!enabled) {
-        [self RSLog:@"Notification POD not enabled"];
-        return;
-    }
-    
     if (!self.customValidation()) {
         [self RSLog:@"customValidation has failed"];
         onVerificationComplete();
@@ -108,9 +102,7 @@
 
 - (void)showSettingsMessage
 {
-    if (!enabled) return;
-    
-    if ([self retrieveAsked] || self.customValidation()) {
+    if ([self retrieveAsked] || !self.customValidation()) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle: settingsAlertTitle
                                                                                  message: settingsAlertBody
                                                                           preferredStyle:UIAlertControllerStyleAlert];
@@ -159,11 +151,6 @@
         return false;
     }
     
-    if (!enabled){
-        [self RSLog:@"Not enabled"];
-        return false;
-    }
-    
     if (!self.customValidation()){
         [self RSLog:@"Failed customValidation"];
         return false;
@@ -207,7 +194,6 @@
     [alert addAction:laterAction];
     [alert addAction:neverAction];
     
-    //nsassert this thing here
     [self.vc presentViewController:alert animated:YES completion:nil];
 }
 
